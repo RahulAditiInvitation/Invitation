@@ -34,7 +34,7 @@ body.invitation-open .cover{display:none}
 @keyframes pulse{50%{box-shadow:0 0 0 10px rgba(214,173,91,0)}0%,100%{box-shadow:0 0 0 0 rgba(214,173,91,.25)}}
 .card{background:linear-gradient(145deg,#fffaf0,#f2dfc1);color:#35133b;border-radius:24px;padding:38px 28px;box-shadow:0 30px 80px #0007;border:1px solid var(--gold);position:relative}
 .card:before{content:"";position:absolute;inset:12px;border:1px solid #b78d43;border-radius:17px;pointer-events:none}
-.card h2{font-size:48px;margin:10px 0;color:var(--purple)}
+.card h2{font-size:40px;margin:10px 0;color:var(--purple)}
 .card p{line-height:1.8;max-width:650px;margin:10px auto}
 .names{font-family:'Great Vibes',cursive;font-size:clamp(30px,9.6vw,64px);color:var(--purple);margin:12px 0;line-height:1.02;white-space:nowrap;max-width:100%;box-sizing:border-box}.names>span:first-child,.names>span:last-child{display:inline-block}.names .with-connector{margin-top:4px;margin-bottom:18px}
 .event{background:linear-gradient(#2b0d31,#4b174f)}
@@ -47,15 +47,15 @@ body.invitation-open .cover{display:none}
 .scratch-section{background:radial-gradient(circle,#63306a,#250b2c)}
 .scratch-wrap{position:relative;width:min(650px,100%);height:310px;margin:25px auto}
 #scratchCanvas{position:absolute;inset:0;width:100%;height:100%;border-radius:22px;z-index:2;touch-action:none;cursor:crosshair;box-shadow:0 20px 60px #0008}
-.secret{position:absolute;inset:0;border-radius:22px;background:linear-gradient(135deg,#fff8ea,#ead5df);color:#4b174f;display:flex;align-items:center;justify-content:center;padding:35px;z-index:1}
-.secret h3{font-size:38px;margin:5px 0}.secret p{font-size:15px}
-.secret p{line-height:1.7}
+.secret{position:absolute;inset:0;box-sizing:border-box;border-radius:22px;background:linear-gradient(135deg,#fff8ea,#ead5df);color:#4b174f;display:flex;align-items:center;justify-content:center;padding:24px;z-index:1;overflow:hidden}
+.secret h3{font-size:30px;line-height:1.15;margin:5px 0}.secret p{font-size:14px;line-height:1.55;margin:10px auto;max-width:100%}
+.secret .script{font-size:28px !important;line-height:1.1;overflow-wrap:anywhere}
 .hint{font-size:12px;letter-spacing:1px;opacity:.8}
 .rsvp{background:#fff8ea;color:#35133b}
 .rsvp .card{background:#fffdf8}
 .btn{display:inline-block;background:var(--purple);color:white;text-decoration:none;padding:14px 24px;border-radius:30px;margin:8px;font-size:12px;letter-spacing:1px}
 footer{padding:35px 20px;text-align:center;background:#18071e;color:#d6ad5b;font-size:12px}
-@media(max-width:560px){.names{font-size:clamp(30px,9.6vw,36px);letter-spacing:-.25px}.row{display:block}.date{width:auto;margin-bottom:5px}.card{padding:38px 20px}}
+@media(max-width:560px){.names{font-size:clamp(30px,9.6vw,36px);letter-spacing:-.25px}.row{display:block}.date{width:auto;margin-bottom:5px}.card{padding:30px 18px}.card h2{font-size:32px;line-height:1.08}.secret{padding:18px 16px}.secret h3{font-size:25px}.secret p{font-size:13px;line-height:1.45}.secret .script{font-size:24px !important}}
 
 #invitation,#details,#timeline,#surprise,#rsvp,footer{display:none}
 body.invitation-open{overflow-x:hidden;overflow-y:auto}
@@ -80,7 +80,12 @@ footer{text-align:center;padding:12px 16px 18px;color:var(--cream);font-size:11p
 .btn.icon-btn.phone-icon{font-size:28px;line-height:1}
 .btn.whatsapp{background:#5b1d60}
 .music-control{position:fixed;top:14px;right:14px;z-index:50;width:42px;height:42px;padding:0;border:1px solid rgba(214,173,91,.82);border-radius:50%;background:rgba(37,11,44,.92);color:var(--gold);box-shadow:0 6px 18px rgba(0,0,0,.25);backdrop-filter:blur(5px);cursor:pointer;transition:opacity .35s ease,transform .2s ease,box-shadow .35s ease}
-.music-control .music-icon{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1}
+.music-control 
+.music-icon{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px}
+.music-note{position:relative;z-index:1}
+.music-slash{position:absolute;left:3px;top:11px;width:20px;height:2px;background:currentColor;transform:rotate(-45deg);transform-origin:center;opacity:0;z-index:2;pointer-events:none;border-radius:2px;transition:opacity .2s ease}
+.music-control.muted .music-slash{opacity:1}
+.music-icon{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1}
 .music-control.muted{opacity:.88}
 .music-control.playing{box-shadow:0 0 0 4px rgba(214,173,91,.08),0 6px 18px rgba(0,0,0,.25)}
 .music-control:active{transform:scale(.94)}
@@ -93,8 +98,8 @@ footer{text-align:center;padding:12px 16px 18px;color:var(--cream);font-size:11p
 </head>
 <body>
 
-<button class="music-control muted" id="musicControl" type="button" aria-label="Unmute Perfect instrumental" aria-pressed="true">
-  <span class="music-icon" id="musicIcon" aria-hidden="true">♫</span>
+<button class="music-control" id="musicControl" type="button" aria-label="Mute Perfect instrumental" aria-pressed="false">
+  <span class="music-icon" id="musicIcon" aria-hidden="true"><span class="music-note" id="musicNote">♫</span><span class="music-slash" aria-hidden="true"></span></span>
   </button>
 <div id="musicPlayer" class="music-player" aria-hidden="true"></div>
 
@@ -202,13 +207,14 @@ let musicUserUnlocked = false;
 let musicUserMuted = false;
 const musicControl = document.getElementById('musicControl');
 const musicIcon = document.getElementById('musicIcon');
+const musicNote = document.getElementById('musicNote');
 
 function updateMusicUI(){
   if(!musicControl || !musicPlayer || !musicReady) return;
   const muted = musicPlayer.isMuted ? musicPlayer.isMuted() : true;
   musicControl.classList.toggle('muted', muted);
   musicControl.classList.toggle('playing', !muted);
-  musicIcon.textContent = muted ? '♫' : '♪';
+  if(musicNote) musicNote.textContent = muted ? '♫' : '♪';
   musicControl.setAttribute('aria-pressed', String(muted));
   musicControl.setAttribute('aria-label', muted ? 'Play Perfect instrumental' : 'Mute Perfect instrumental');
 }
@@ -217,12 +223,9 @@ function playMusic(){
   musicWantsPlay = true;
   if(!musicPlayer || !musicReady || musicUserMuted) return;
   musicPlayer.setVolume(55);
-  if(musicUserUnlocked){
-    musicPlayer.unMute();
-  }else{
-    // Audible autoplay is blocked by many mobile browsers until a user gesture.
-    musicPlayer.mute();
-  }
+  // Always request audible playback. If the browser blocks autoplay before a
+  // gesture, the Tap to open click below retries this in the same user gesture.
+  musicPlayer.unMute();
   musicPlayer.playVideo();
   updateMusicUI();
 }
