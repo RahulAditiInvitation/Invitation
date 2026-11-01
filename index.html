@@ -46,8 +46,8 @@ body.invitation-open .cover{display:none}
 .row{display:flex;gap:20px;padding:16px 0;border-bottom:1px solid #d6ad5b44}
 .date{width:145px;color:var(--gold);font-weight:600;font-size:13px;flex:none}
 .scratch-section{background:radial-gradient(circle,#63306a,#250b2c)}
-.scratch-wrap{position:relative;width:min(650px,100%);height:310px;margin:25px auto}
-#scratchCanvas{position:absolute;inset:0;width:100%;height:100%;border-radius:22px;z-index:2;touch-action:none;cursor:crosshair;box-shadow:0 20px 60px #0008}
+.scratch-wrap{position:relative;width:min(650px,100%);height:310px;margin:25px auto;border-radius:22px;overflow:hidden;background-color:#8d8d8d;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.12) 0 10px,transparent 10px 28px);box-shadow:0 20px 60px #0008}
+#scratchCanvas{position:absolute;inset:0;display:block;width:100%;height:100%;border-radius:22px;z-index:2;touch-action:none;cursor:crosshair;background-color:#8d8d8d;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.12) 0 10px,transparent 10px 28px)}
 .secret{position:absolute;inset:0;box-sizing:border-box;border-radius:22px;background:linear-gradient(135deg,#fff8ea,#ead5df);color:#4b174f;display:flex;align-items:center;justify-content:center;padding:24px;z-index:1;overflow:hidden}
 .secret h3{font-size:30px;line-height:1.15;margin:5px 0}.secret p{font-size:14px;line-height:1.55;margin:10px auto;max-width:100%}
 .secret .script{font-size:28px !important;line-height:1.1;overflow-wrap:anywhere}
@@ -321,34 +321,46 @@ document.head.appendChild(ytScript);
 
 const canvas=document.getElementById('scratchCanvas');
 const ctx=canvas.getContext('2d');
-let drawing=false, revealed=false;
-function resize(){
-  const r=canvas.getBoundingClientRect(), d=devicePixelRatio||1;
-  canvas.width=r.width*d; canvas.height=r.height*d; ctx.setTransform(d,0,0,d,0,0);
+let drawing=false, revealed=false, hasScratched=false, strokeCount=0;
+function resizeScratch(){
+  if(revealed || hasScratched) return;
+  const r=canvas.getBoundingClientRect();
+  if(!r.width || !r.height) return;
+  const d=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.round(r.width*d); canvas.height=Math.round(r.height*d);
+  ctx.setTransform(d,0,0,d,0,0);
+  ctx.globalCompositeOperation='source-over';
   ctx.fillStyle='#8d8d8d'; ctx.fillRect(0,0,r.width,r.height);
   ctx.fillStyle='rgba(255,255,255,.12)';
   for(let x=-r.height;x<r.width+r.height;x+=28){ctx.save();ctx.translate(x,0);ctx.rotate(Math.PI/4);ctx.fillRect(0,0,10,r.height*2);ctx.restore();}
   ctx.fillStyle='#fff';ctx.font='600 18px Montserrat';ctx.textAlign='center';
   ctx.fillText('SCRATCH HERE ✦',r.width/2,r.height/2);
 }
-function pos(e){const r=canvas.getBoundingClientRect(); const p=e.touches?e.touches[0]:e; return [p.clientX-r.left,p.clientY-r.top]}
-function scratch(e){
-  if(!drawing)return; e.preventDefault(); const [x,y]=pos(e);
-  ctx.globalCompositeOperation='destination-out'; ctx.beginPath();ctx.arc(x,y,30,0,Math.PI*2);ctx.fill();
-  checkReveal();
-}
+function pos(e){const r=canvas.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]}
 function checkReveal(){
-  if(revealed)return;
-  const data=ctx.getImageData(0,0,canvas.width,canvas.height).data; let clear=0;
-  for(let i=3;i<data.length;i+=40) if(data[i]<30) clear++;
-  if(clear>data.length/40*.42){revealed=true;canvas.style.opacity='0';canvas.style.pointerEvents='none';}
+  if(revealed || !canvas.width || !canvas.height) return;
+  const data=ctx.getImageData(0,0,canvas.width,canvas.height).data; let clear=0, samples=0;
+  for(let i=3;i<data.length;i+=40){samples++;if(data[i]<30)clear++;}
+  if(samples && clear/samples>.42){revealed=true;canvas.style.opacity='0';canvas.style.pointerEvents='none';}
 }
-canvas.addEventListener('pointerdown',e=>{drawing=true;scratch(e)});
+function scratch(e){
+  if(!drawing || revealed)return;
+  e.preventDefault();hasScratched=true;
+  const [x,y]=pos(e);
+  ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(x,y,30,0,Math.PI*2);ctx.fill();
+  strokeCount++;
+  // Avoid reading the full canvas on every pointer-move; check periodically and on release.
+  if(strokeCount%8===0)checkReveal();
+}
+canvas.addEventListener('pointerdown',e=>{drawing=true;try{canvas.setPointerCapture(e.pointerId)}catch(_){}scratch(e)});
 canvas.addEventListener('pointermove',scratch);
-window.addEventListener('pointerup',()=>drawing=false);
-canvas.addEventListener('touchstart',e=>{drawing=true;scratch(e)},{passive:false});
-canvas.addEventListener('touchmove',scratch,{passive:false});
-window.addEventListener('resize',resize); resize();
+function stopScratching(){if(drawing){drawing=false;checkReveal()}}
+window.addEventListener('pointerup',stopScratching);
+window.addEventListener('pointercancel',stopScratching);
+// Paint after layout is ready; CSS already provides an opaque cover before this runs.
+requestAnimationFrame(()=>requestAnimationFrame(resizeScratch));
+if('ResizeObserver' in window){new ResizeObserver(()=>requestAnimationFrame(resizeScratch)).observe(canvas)}
+window.addEventListener('resize',()=>requestAnimationFrame(resizeScratch));
 
 document.getElementById('openInvitation').addEventListener('click', function(e){
   e.preventDefault();
